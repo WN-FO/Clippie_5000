@@ -1,3 +1,4 @@
+// Type declarations for fluent-ffmpeg
 declare module 'fluent-ffmpeg' {
   interface FfmpegCommand {
     input(input: string): this;
