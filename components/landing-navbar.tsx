@@ -20,15 +20,22 @@ export const LandingNavbar = () => {
           <Image fill alt="Logo" src="/logo.png" />
         </div>
         <h1 className={cn("text-2xl font-bold text-white", font.className)}>
-          Omniscient
+          Clippie
         </h1>
       </Link>
       <div className="flex items-center gap-x-2">
-        <Link href={isSignedIn ? "/dashboard" : "/sign-up"}>
+        <Link href={isSignedIn ? "/dashboard" : "/sign-in"}>
           <Button variant="outline" className="rounded-full">
-            Get Started
+            {isSignedIn ? "Dashboard" : "Sign In"}
           </Button>
         </Link>
+        {!isSignedIn && (
+          <Link href="/sign-up">
+            <Button className="rounded-full">
+              Get Started
+            </Button>
+          </Link>
+        )}
       </div>
     </nav>
   );

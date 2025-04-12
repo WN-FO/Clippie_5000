@@ -22,4 +22,93 @@ model UserSubscription {
   stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
   stripePriceId          String?   @map(name: "stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
+  
+  // Track usage in minutes for Clippie's subscription tiers
+  minutesUsed            Int       @default(0)
+  minutesLimit           Int       @default(5) // Default to free tier limit
+  
+  // Relation to User's videos and clips
+  videos                 Video[]
+  clips                  Clip[]
+}
+
+// Video model for original uploaded videos
+model Video {
+  id              String    @id @default(cuid())
+  userId          String    
+  storageUrl      String    // URL to video in Supabase storage
+  filename        String
+  fileSize        Int       // Size in bytes
+  duration        Int       // Duration in seconds
+  format          String    // File format (e.g., mp4, mov)
+  status          String    @default("processing") // processing, ready, error
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  userSubscription UserSubscription @relation(fields: [userId], references: [userId])
+  clips           Clip[]
+  transcription   Transcription?
+
+  @@index([userId])
+}
+
+// Clip model for processed video segments
+model Clip {
+  id              String    @id @default(cuid())
+  userId          String
+  videoId         String
+  title           String?
+  startTime       Int       // Start timestamp in seconds
+  endTime         Int       // End timestamp in seconds
+  duration        Int       // Duration in seconds
+  storageUrl      String?   // URL to processed clip in storage
+  format          String    @default("mp4")
+  resolution      String    @default("720p")
+  status          String    @default("processing") // processing, ready, error
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  video           Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  userSubscription UserSubscription @relation(fields: [userId], references: [userId])
+  transcription   ClipTranscription?
+
+  @@index([userId])
+  @@index([videoId])
+}
+
+// Transcription model for complete video transcriptions
+model Transcription {
+  id              String    @id @default(cuid())
+  videoId         String    @unique
+  text            String    @db.Text
+  language        String    @default("en")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relation
+  video           Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+// ClipTranscription model for clip-specific transcriptions
+model ClipTranscription {
+  id              String    @id @default(cuid())
+  clipId          String    @unique
+  text            String    @db.Text
+  subtitlesUrl    String?   // URL to subtitles file (SRT, VTT)
+  format          String    @default("srt")
+  language        String    @default("en")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Style options for subtitles
+  fontFamily      String?
+  fontSize        Int?
+  textColor       String?
+  backgroundColor String?
+  position        String?   // top, middle, bottom
+  
+  // Relation
+  clip            Clip      @relation(fields: [clipId], references: [id], onDelete: Cascade)
 }
