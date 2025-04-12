@@ -1,13 +1,36 @@
-import { auth } from "@clerk/nextjs/server";
+import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
 import prismadb from "@/lib/prismadb";
 import { SubscriptionPlan, PLANS } from "@/constants/subscription-plans";
 
 const DAY_IN_MS = 86_400_000;
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+async function getUserId() {
+  try {
+    const cookieStore = cookies();
+    const supabaseToken = cookieStore.get('sb-access-token')?.value;
+    
+    if (!supabaseToken) return null;
+    
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(supabaseToken);
+    
+    if (error || !user) return null;
+    
+    return user.id;
+  } catch (error) {
+    console.error("Error getting user ID:", error);
+    return null;
+  }
+}
+
 // Check user's subscription status
 export async function checkSubscription() {
-  const { userId } = auth();
+  const userId = await getUserId();
 
   if (!userId) {
     return false;
@@ -38,8 +61,8 @@ export async function checkSubscription() {
 // Get user's subscription data
 export async function getUserSubscription(userId?: string | null) {
   if (!userId) {
-    const { userId: authUserId } = auth();
-    userId = authUserId;
+    const id = await getUserId();
+    userId = id;
   }
 
   if (!userId) {
@@ -69,8 +92,8 @@ export async function getUserSubscription(userId?: string | null) {
 // Get user's subscription tier
 export async function getUserPlan(userId?: string): Promise<SubscriptionPlan> {
   if (!userId) {
-    const { userId: authUserId } = auth();
-    userId = authUserId;
+    const id = await getUserId();
+    userId = id || undefined;
   }
 
   if (!userId) {
@@ -103,8 +126,8 @@ export async function getUserPlan(userId?: string): Promise<SubscriptionPlan> {
 // Check if user has any minutes left in their plan
 export async function hasAvailableMinutes(userId?: string): Promise<boolean> {
   if (!userId) {
-    const { userId: authUserId } = auth();
-    userId = authUserId;
+    const id = await getUserId();
+    userId = id || undefined;
   }
 
   if (!userId) {
@@ -126,8 +149,8 @@ export async function hasAvailableMinutes(userId?: string): Promise<boolean> {
 // Get user's remaining minutes
 export async function getRemainingMinutes(userId?: string): Promise<number> {
   if (!userId) {
-    const { userId: authUserId } = auth();
-    userId = authUserId;
+    const id = await getUserId();
+    userId = id || undefined;
   }
 
   if (!userId) {

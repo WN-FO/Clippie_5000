@@ -1,5 +1,6 @@
-import { auth, currentUser } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
 import prismadb from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe";
@@ -9,12 +10,15 @@ const settingsUrl = absoluteUrl("/settings");
 
 export async function GET() {
   try {
-    const { userId } = auth();
-    const user = await currentUser();
-
-    if (!userId || !user) {
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session || !session.user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+    
+    const userId = session.user.id;
+    const userEmail = session.user.email;
 
     const userSubscription = await prismadb.userSubscription.findUnique({
       where: {
@@ -37,7 +41,7 @@ export async function GET() {
       payment_method_types: ["card"],
       mode: "subscription",
       billing_address_collection: "auto",
-      customer_email: user.emailAddresses[0].emailAddress,
+      customer_email: userEmail,
       line_items: [
         {
           price_data: {

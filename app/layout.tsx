@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import { constructMetadata } from "@/lib/metadata";
+import { AuthProvider } from "@/hooks/use-auth";
 
 import { Toaster } from 'sonner'
 import { ModalProvider } from "@/components/modal-provider";
@@ -17,9 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <AuthProvider>
       <html lang="en" suppressHydrationWarning>
-
         <body className={inter.className}>
           <Toaster richColors/>
           <ModalProvider />
@@ -27,6 +26,6 @@ export default function RootLayout({
           {children}
         </body>
       </html>
-    </ClerkProvider>
+    </AuthProvider>
   );
 }
