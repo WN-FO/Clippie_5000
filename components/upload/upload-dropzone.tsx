@@ -62,17 +62,28 @@ export const UploadDropzone = () => {
       const fileName = `${fileId}.${fileExt}`;
       const filePath = `${fileName}`;
       
+      // Setup manual progress updates
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 500);
+      
       // Upload to Supabase Storage
       const { data, error } = await supabaseClient.storage
         .from(STORAGE_BUCKETS.VIDEOS)
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false,
-          onUploadProgress: (progress) => {
-            const percent = Math.round((progress.loaded / progress.total) * 100);
-            setProgress(percent);
-          },
+          upsert: false
         });
+      
+      // Clear interval and set to 100% when upload is complete
+      clearInterval(progressInterval);
+      setProgress(100);
       
       if (error) {
         throw error;
