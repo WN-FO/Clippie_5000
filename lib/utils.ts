@@ -56,3 +56,16 @@ export function formatFileSize(bytes: number): string {
   
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
+
+/**
+ * Format a date to a human-readable string
+ * @param date - The date to format
+ * @returns Formatted date string (e.g., "March 15, 2024")
+ */
+export function formatDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}

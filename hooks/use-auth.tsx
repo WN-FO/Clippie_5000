@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Session, User } from '@supabase/supabase-js';

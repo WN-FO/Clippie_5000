@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import { constructMetadata } from "@/lib/metadata";
-import { AuthProvider } from "@/components/providers/auth-provider";
+import { AuthProvider } from "@/hooks/use-auth";
 
 import { Toaster } from 'sonner'
 import { ModalProvider } from "@/components/modal-provider";

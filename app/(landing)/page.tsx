@@ -1,6 +1,7 @@
 "use client";
 
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from "@/hooks/use-auth";
+import { redirect } from "next/navigation";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { LandingNavbar } from '@/components/landing-navbar';
@@ -11,7 +12,11 @@ import { Scissors, Video, FileText, Clock, CheckCircle2 } from 'lucide-react';
 import { PLANS } from '@/constants/subscription-plans';
 
 export default function LandingPage() {
-  const { isSignedIn } = useAuth();
+  const { user } = useAuth();
+
+  if (user) {
+    redirect("/dashboard");
+  }
 
   return (
     <div className="h-full">
@@ -102,8 +107,8 @@ export default function LandingPage() {
               </CardContent>
               <CardFooter>
                 <Button className="w-full" asChild>
-                  <Link href={isSignedIn ? "/dashboard" : "/sign-up"}>
-                    {isSignedIn ? "Go to Dashboard" : "Get Started Free"}
+                  <Link href="/sign-up">
+                    "Get Started Free"
                   </Link>
                 </Button>
               </CardFooter>
@@ -131,8 +136,8 @@ export default function LandingPage() {
               </CardContent>
               <CardFooter>
                 <Button className="w-full" asChild>
-                  <Link href={isSignedIn ? "/settings" : "/sign-up"}>
-                    {isSignedIn ? "Upgrade Now" : "Start Free Trial"}
+                  <Link href="/sign-up">
+                    "Start Free Trial"
                   </Link>
                 </Button>
               </CardFooter>
@@ -157,8 +162,8 @@ export default function LandingPage() {
               </CardContent>
               <CardFooter>
                 <Button className="w-full" variant="outline" asChild>
-                  <Link href={isSignedIn ? "/settings" : "/sign-up"}>
-                    {isSignedIn ? "Upgrade Now" : "Start Free Trial"}
+                  <Link href="/sign-up">
+                    "Start Free Trial"
                   </Link>
                 </Button>
               </CardFooter>
@@ -174,8 +179,8 @@ export default function LandingPage() {
           Start transforming your long-form videos into captivating clips today.
         </p>
         <Button size="lg" asChild>
-          <Link href={isSignedIn ? "/dashboard" : "/sign-up"}>
-            {isSignedIn ? "Go to Dashboard" : "Get Started for Free"}
+          <Link href="/sign-up">
+            "Get Started for Free"
           </Link>
         </Button>
       </section>

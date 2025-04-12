@@ -1,7 +1,6 @@
-import Replicate from "replicate";
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-
+import { supabaseClient } from "@/lib/supabase";
+import Replicate from "replicate";
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
 
@@ -11,13 +10,15 @@ const replicate = new Replicate({
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
-    const body = await req.json();
-    const { prompt } = body;
-
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
+    
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const body = await req.json();
+    const { prompt } = body;
 
     if (!prompt) {
       return new NextResponse("Prompt is required", { status: 400 });

@@ -1,20 +1,21 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
+import { supabaseClient } from "@/lib/supabase";
 import prismadb from "@/lib/prismadb";
 import { getUserSubscription, hasAvailableMinutes } from "@/lib/subscription";
 import { extractClip } from "@/lib/video-service";
-import { transcribeClip, generateSubtitles } from "@/lib/transcription-service";
+import { transcribeClip } from "@/lib/transcription-service";
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
     
     const body = await req.json();
-    const { videoId, title, startTime, endTime, subtitles } = body;
+    const { videoId, title, startTime, endTime, subtitlesEnabled } = body;
     
     if (!videoId || startTime === undefined || endTime === undefined) {
       return new NextResponse("Missing required fields", { status: 400 });
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
       endTime, 
       resolution, 
       watermark, 
-      subtitles,
+      subtitlesEnabled,
       userId
     );
     
@@ -108,7 +109,7 @@ async function processClip(
   endTime: number,
   resolution: string,
   watermark: boolean,
-  generateSubtitles: boolean,
+  subtitlesEnabled: boolean,
   userId: string
 ) {
   try {
@@ -130,8 +131,8 @@ async function processClip(
       },
     });
     
-    // Generate subtitles if requested
-    if (generateSubtitles) {
+    // Generate subtitles if enabled
+    if (subtitlesEnabled) {
       console.log(`Processing clip ${clipId}: Generating transcription...`);
       try {
         // Transcribe the specific portion of the video
@@ -141,24 +142,16 @@ async function processClip(
           endTime
         );
         
-        console.log(`Processing clip ${clipId}: Creating subtitle file...`);
-        // Generate SRT file from transcription
-        const subtitlesPath = await generateSubtitles(
-          transcription,
-          endTime - startTime
-        );
-        
         // Create the transcription record
         await prismadb.clipTranscription.create({
           data: {
             clipId,
             text: transcription,
-            subtitlesUrl: subtitlesPath,
           },
         });
       } catch (error) {
-        console.error(`Error generating subtitles for clip ${clipId}:`, error);
-        // We continue even if subtitle generation fails
+        console.error(`Error generating transcription for clip ${clipId}:`, error);
+        // We continue even if transcription generation fails
       }
     }
     
@@ -197,7 +190,8 @@ async function processClip(
 
 export async function GET(req: Request) {
   try {
-    const { userId } = auth();
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });

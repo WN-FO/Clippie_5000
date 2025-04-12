@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-
-import prismadb from "@/lib/prismadb";
+import { supabaseClient } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -10,26 +7,23 @@ const settingsUrl = absoluteUrl("/settings");
 
 export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session || !session.user) {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
+
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    
-    const userId = session.user.id;
-    const userEmail = session.user.email;
 
-    const userSubscription = await prismadb.userSubscription.findUnique({
-      where: {
-        userId,
-      },
-    });
+    const { data: subscriptionData } = await supabaseClient
+      .from('subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
+      .single();
 
-    if (userSubscription && userSubscription.stripeCustomerId) {
+    if (subscriptionData?.stripe_customer_id) {
       const stripeSession = await stripe.billingPortal.sessions.create({
-        customer: userSubscription.stripeCustomerId,
-        return_url: settingsUrl,
+        customer: subscriptionData.stripe_customer_id,
+        return_url: settingsUrl
       });
 
       return new NextResponse(JSON.stringify({ url: stripeSession.url }));
@@ -41,19 +35,19 @@ export async function GET() {
       payment_method_types: ["card"],
       mode: "subscription",
       billing_address_collection: "auto",
-      customer_email: userEmail,
+      customer_email: session.user.email,
       line_items: [
         {
           price_data: {
-            currency: "EUR",
+            currency: "USD",
             product_data: {
-              name: "Omniscient Pro",
-              description: "Unlimited AI Generations",
+              name: "Clippie Pro",
+              description: "Unlimited AI Generations"
             },
             unit_amount: 2000,
             recurring: {
-              interval: "month",
-            },
+              interval: "month"
+            }
           },
           quantity: 1,
         },

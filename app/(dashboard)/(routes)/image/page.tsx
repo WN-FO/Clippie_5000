@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from 'sonner'
 
-import Heading from "@/components/heading";
+import { Heading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

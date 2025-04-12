@@ -1,7 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { supabaseClient } from "@/lib/supabase";
 import OpenAI from "openai";
-
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
 
@@ -11,10 +10,9 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
-    const body = await req.json();
-    const { prompt, amount = 1, resolution = "512x512" } = body;
-
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
+    
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -24,6 +22,9 @@ export async function POST(req: Request) {
         status: 500,
       });
     }
+
+    const body = await req.json();
+    const { prompt, amount = 1, resolution = "512x512" } = body;
 
     if (!prompt) {
       return new NextResponse("Prompt is required", { status: 400 });

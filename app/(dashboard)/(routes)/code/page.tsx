@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import OpenAI from "openai";
 import ReactMarkdown from "react-markdown";
 
-import Heading from "@/components/heading";
+import { Heading } from "@/components/heading";
 import { BotAvatar } from "@/components/bot-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

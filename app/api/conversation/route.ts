@@ -1,20 +1,18 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { supabaseClient } from "@/lib/supabase";
 import OpenAI from "openai";
-
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // This is also the default, can be omitted
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
-    const body = await req.json();
-    const { messages } = body;
-
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
+    
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -24,6 +22,9 @@ export async function POST(req: Request) {
         status: 500,
       });
     }
+
+    const body = await req.json();
+    const { messages } = body;
 
     if (!messages) {
       return new NextResponse("Messages are required", { status: 400 });
@@ -51,15 +52,12 @@ export async function POST(req: Request) {
     return NextResponse.json(response.choices[0].message);
   } catch (error: any) {
     if (error instanceof OpenAI.APIError) {
-      console.error(error.status); // e.g. 401
-      console.error(error.message); // e.g. The authentication token you passed was invalid...
-      console.error(error.code); // e.g. 'invalid_api_key'
-      console.error(error.type); // e.g. 'invalid_request_error'
-    } else {
-      // Non-API error
-      console.log("[CONVERSATION_ERROR]", error);
+      console.error(error.status);
+      console.error(error.message);
+      return new NextResponse("OpenAI API error", { status: 500 });
     }
 
-    return new NextResponse("Internal Error", { status: 500 });
+    console.error("[CONVERSATION_ERROR]", error);
+    return new NextResponse("Internal error", { status: 500 });
   }
 }

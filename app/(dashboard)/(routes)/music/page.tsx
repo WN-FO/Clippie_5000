@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { toast } from 'sonner'
 import { Music, Send } from "lucide-react";
 
-import Heading from "@/components/heading";
+import { Heading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";

@@ -1,7 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { supabaseClient } from "@/lib/supabase";
 import OpenAI from "openai";
-
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
 
@@ -17,10 +16,9 @@ const instructionMessage: OpenAI.ChatCompletionSystemMessageParam = {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
-    const body = await req.json();
-    const { messages } = body;
-
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
+    
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -30,6 +28,9 @@ export async function POST(req: Request) {
         status: 500,
       });
     }
+
+    const body = await req.json();
+    const { messages } = body;
 
     if (!messages) {
       return new NextResponse("Messages are required", { status: 400 });

@@ -1,16 +1,16 @@
-import { useUser } from "@clerk/nextjs";
+'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 
 export const UserAvatar = () => {
-  const { user } = useUser();
+  const { user } = useAuth();
 
   return (
     <Avatar className="h-8 w-8">
-      <AvatarImage src={user?.profileImageUrl} />
+      <AvatarImage src={user?.user_metadata?.avatar_url} />
       <AvatarFallback>
-        {user?.firstName?.charAt(0)}
-        {user?.lastName?.charAt(0)}
+        {user?.email?.charAt(0).toUpperCase() || 'U'}
       </AvatarFallback>
     </Avatar>
   );

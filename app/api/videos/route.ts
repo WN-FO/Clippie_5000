@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs";
+import { supabaseClient, STORAGE_BUCKETS, getStorageUrl } from "@/lib/supabase";
 import prismadb from "@/lib/prismadb";
 import { getUserSubscription } from "@/lib/subscription";
-import { supabaseClient, STORAGE_BUCKETS, getStorageUrl } from "@/lib/supabase";
 import { getVideoInfo } from "@/lib/video-service";
 import { PLANS } from "@/constants/subscription-plans";
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth();
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -186,7 +186,8 @@ async function processVideo(videoId: string, storageUrl: string, maxVideoLength:
 
 export async function GET(req: Request) {
   try {
-    const { userId } = auth();
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const userId = session?.user?.id;
     
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
