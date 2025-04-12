@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 // Create a single supabase client for interacting with the database
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -6,10 +6,10 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
 
 // Client for browser usage (auth)
-export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+export const supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // Admin client for server usage (when higher privileges are needed)
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+export const supabaseAdmin = createBrowserClient(supabaseUrl, supabaseServiceRoleKey);
 
 // Storage bucket names
 export const STORAGE_BUCKETS = {
