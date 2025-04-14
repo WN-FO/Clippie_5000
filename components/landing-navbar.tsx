@@ -1,42 +1,20 @@
 "use client";
 
-import { Montserrat } from "next/font/google";
-import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "@/hooks/use-auth";
-
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const font = Montserrat({ weight: "600", subsets: ["latin"] });
-
 export const LandingNavbar = () => {
-  const { user } = useAuth();
-  const isSignedIn = !!user;
-
+  console.log('LandingNavbar rendering');
+  
   return (
-    <nav className="p-4 bg-transparent flex items-center justify-between">
-      <Link href="/" className="flex items-center">
-        <div className="relative h-8 w-8 mr-4">
-          <Image fill alt="Logo" src="/logo.png" />
-        </div>
-        <h1 className={cn("text-2xl font-bold text-white", font.className)}>
-          Clippie
-        </h1>
+    <nav className="p-4 bg-white border-b flex items-center justify-between">
+      <Link href="/" className="text-2xl font-bold">
+        Clippie
       </Link>
       <div className="flex items-center gap-x-2">
-        <Link href={isSignedIn ? "/dashboard" : "/sign-in"}>
-          <Button variant="outline" className="rounded-full">
-            {isSignedIn ? "Dashboard" : "Sign In"}
-          </Button>
-        </Link>
-        {!isSignedIn && (
-          <Link href="/sign-up">
-            <Button className="rounded-full">
-              Get Started
-            </Button>
-          </Link>
-        )}
+        <Button asChild>
+          <Link href="/sign-up">Get Started</Link>
+        </Button>
       </div>
     </nav>
   );

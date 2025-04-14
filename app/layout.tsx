@@ -3,11 +3,6 @@ import { constructMetadata } from "@/lib/metadata";
 import { Toaster } from 'sonner'
 import { ModalProvider } from "@/components/modal-provider";
 import ClientAuthProvider from "@/components/client-auth-provider";
-import WhiteScreenDetector from "@/components/white-screen-detector";
-import DebuggerTool from "@/components/debugger-tool";
-import { Suspense } from "react";
-import { ErrorBoundary } from "@/components/error-boundary";
-import { ErrorDisplay } from "@/components/ui/error-display";
 import { AppProvider } from '@/components/app-provider';
 import "./globals.css";
 
@@ -34,6 +29,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log('RootLayout rendering');
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -49,27 +46,46 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-white min-h-screen`}>
         <ErrorBoundary
           onError={(error, errorInfo) => {
             console.error('Root level error:', error, errorInfo);
           }}
         >
           <ClientAuthProvider>
-            <div id="app-root">
-              <main id="main-content" className="min-h-screen bg-white">
-                <Suspense fallback={<LoadingFallback />}>
-                  <AppProvider>
-                    {children}
-                  </AppProvider>
-                  <Toaster richColors position="bottom-right" />
-                  <ModalProvider />
-                </Suspense>
+            <AppProvider>
+              <main className="min-h-screen bg-white">
+                {children}
               </main>
-            </div>
-            <WhiteScreenDetector />
-            <DebuggerTool />
+              <Toaster />
+              <ModalProvider />
+            </AppProvider>
           </ClientAuthProvider>
+          
+          {/* Debug overlay */}
+          <div id="debug-overlay" style={{
+            position: 'fixed',
+            bottom: '1rem',
+            right: '1rem',
+            background: 'rgba(0,0,0,0.8)',
+            color: 'white',
+            padding: '0.5rem',
+            borderRadius: '0.5rem',
+            zIndex: 9999,
+            display: 'none'
+          }}>
+            App is loading...
+          </div>
+
+          <script dangerouslySetInnerHTML={{
+            __html: `
+              console.log('Page loaded');
+              document.getElementById('debug-overlay').style.display = 'block';
+              setTimeout(() => {
+                document.getElementById('debug-overlay').textContent = 'App loaded';
+              }, 1000);
+            `
+          }} />
         </ErrorBoundary>
       </body>
     </html>
