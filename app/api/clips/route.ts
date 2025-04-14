@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getServerSession } from "@/lib/auth-utils";
 import prismadb from "@/lib/prismadb";
-import { getUserSubscription, hasAvailableMinutes } from "@/lib/subscription";
-import { extractClip } from "@/lib/video-service";
-import { transcribeClip } from "@/lib/transcription-service";
-import { cookies } from "next/headers";
+import { getUserSubscription } from "@/lib/subscription";
+import { PLANS } from "@/constants/subscription-plans";
 
 // Make sure we're using Node.js runtime for this API route
 export const runtime = 'nodejs';
@@ -12,46 +10,21 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    // Get the session using the cookies API
-    const cookieStore = cookies();
-    const { data: { session } } = await supabaseAdmin.auth.getSession();
-    
+    const session = await getServerSession();
     const userId = session?.user?.id;
     
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
-    
+
     const body = await req.json();
-    const { videoId, title, startTime, endTime, subtitlesEnabled } = body;
-    
+    const { videoId, title, startTime, endTime, resolution = '720p', subtitlesEnabled = false } = body;
+
     if (!videoId || startTime === undefined || endTime === undefined) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
-    
-    // Validate time range
-    if (startTime >= endTime) {
-      return new NextResponse("Start time must be before end time", { status: 400 });
-    }
-    
-    if (endTime - startTime < 3) {
-      return new NextResponse("Clip must be at least 3 seconds long", { status: 400 });
-    }
-    
-    if (endTime - startTime > 60) {
-      return new NextResponse("Clip cannot be longer than 60 seconds for performance reasons", { status: 400 });
-    }
-    
-    // Check if the user has available minutes
-    const hasMinutes = await hasAvailableMinutes(userId);
-    if (!hasMinutes) {
-      return new NextResponse(
-        "You've reached your monthly limit. Upgrade your plan for more processing minutes.", 
-        { status: 403 }
-      );
-    }
-    
-    // Get user subscription to determine quality settings
+
+    // Get the user's subscription
     const userSubscription = await getUserSubscription(userId);
     const isPro = !!userSubscription?.stripePriceId;
     const plan = isPro 
@@ -60,9 +33,31 @@ export async function POST(req: Request) {
         : 'CREATOR'
       : 'FREE';
     
-    // Set quality options based on plan
-    const resolution = plan === 'PRO' ? '4K' : plan === 'CREATOR' ? '1080p' : '720p';
-    const watermark = plan === 'FREE'; // Add watermark for free plan
+    // Check if the clip duration is within limits
+    const clipDuration = endTime - startTime;
+    const maxClipDuration = 60; // Maximum clip duration in seconds
+    
+    if (clipDuration > maxClipDuration) {
+      return new NextResponse(
+        `Clip duration exceeds the maximum allowed (${maxClipDuration} seconds)`, 
+        { status: 403 }
+      );
+    }
+    
+    // Check if the user has enough minutes remaining
+    const clipDurationMinutes = Math.ceil(clipDuration / 60);
+    const minutesUsed = userSubscription?.minutesUsed || 0;
+    const maxMinutes = PLANS[plan as keyof typeof PLANS].minutesLimit;
+    
+    if (minutesUsed + clipDurationMinutes > maxMinutes) {
+      return new NextResponse(
+        `Not enough minutes remaining in your plan. Used: ${minutesUsed}, Max: ${maxMinutes}`, 
+        { status: 403 }
+      );
+    }
+    
+    // Add watermark for free plan
+    const watermark = plan === 'FREE';
     
     // Get the source video
     const video = await prismadb.video.findUnique({
@@ -89,18 +84,29 @@ export async function POST(req: Request) {
         resolution,
       },
     });
-    
-    // Start processing the clip asynchronously
-    processClip(
-      clip.id, 
-      video.storageUrl, 
-      startTime, 
-      endTime, 
-      resolution, 
-      watermark, 
-      subtitlesEnabled,
-      userId
-    );
+
+    // Start processing the clip
+    const response = await fetch('/api/video-processing', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'extractClip',
+        clipId: clip.id,
+        videoUrl: video.storageUrl,
+        startTime,
+        endTime,
+        resolution,
+        watermark,
+        subtitlesEnabled,
+        userId,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to start clip processing: ${response.statusText}`);
+    }
     
     return NextResponse.json(clip);
   } catch (error) {
@@ -109,99 +115,9 @@ export async function POST(req: Request) {
   }
 }
 
-// Helper function to process the clip asynchronously
-async function processClip(
-  clipId: string,
-  videoUrl: string,
-  startTime: number,
-  endTime: number,
-  resolution: string,
-  watermark: boolean,
-  subtitlesEnabled: boolean,
-  userId: string
-) {
-  try {
-    // Extract the clip first
-    console.log(`Processing clip ${clipId}: Extracting clip...`);
-    const clipPath = await extractClip(
-      videoUrl,
-      startTime,
-      endTime,
-      resolution,
-      watermark
-    );
-    
-    // Update clip with the storage URL
-    await prismadb.clip.update({
-      where: { id: clipId },
-      data: {
-        storageUrl: clipPath,
-      },
-    });
-    
-    // Generate subtitles if enabled
-    if (subtitlesEnabled) {
-      console.log(`Processing clip ${clipId}: Generating transcription...`);
-      try {
-        // Transcribe the specific portion of the video
-        const transcription = await transcribeClip(
-          videoUrl,
-          startTime,
-          endTime
-        );
-        
-        // Create the transcription record
-        await prismadb.clipTranscription.create({
-          data: {
-            clipId,
-            text: transcription,
-          },
-        });
-      } catch (error) {
-        console.error(`Error generating transcription for clip ${clipId}:`, error);
-        // We continue even if transcription generation fails
-      }
-    }
-    
-    // Update the clip status to ready
-    await prismadb.clip.update({
-      where: { id: clipId },
-      data: {
-        status: 'ready',
-      },
-    });
-    
-    // Update the user's minutes used
-    const clipDurationMinutes = Math.ceil((endTime - startTime) / 60);
-    await prismadb.userSubscription.update({
-      where: { userId },
-      data: {
-        minutesUsed: {
-          increment: clipDurationMinutes,
-        },
-      },
-    });
-    
-    console.log(`Clip ${clipId} processed successfully`);
-  } catch (error) {
-    console.error("Clip processing error:", error);
-    
-    // Update clip status to error
-    await prismadb.clip.update({
-      where: { id: clipId },
-      data: {
-        status: 'error',
-      },
-    });
-  }
-}
-
 export async function GET(req: Request) {
   try {
-    // Get the session using the cookies API
-    const cookieStore = cookies();
-    const { data: { session } } = await supabaseAdmin.auth.getSession();
-    
+    const session = await getServerSession();
     const userId = session?.user?.id;
     
     if (!userId) {

@@ -116,16 +116,21 @@ const ProcessPage = ({ params }: { params: { videoId: string } }) => {
         title: clipTitle,
         startTime,
         endTime,
-        subtitles: subtitlesEnabled,
+        resolution: '720p', // Default to 720p for now
+        subtitlesEnabled,
       });
       
       toast.success("Clip created successfully");
       
       // Redirect to the clip detail page
       router.push(`/clips/${response.data.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating clip:", error);
-      toast.error("Failed to create clip");
+      if (error.response?.data) {
+        toast.error(error.response.data);
+      } else {
+        toast.error("Failed to create clip");
+      }
     } finally {
       setCreating(false);
     }
