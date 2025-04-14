@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import ffmpeg from 'fluent-ffmpeg';
+const ffmpeg = require('fluent-ffmpeg');
 import ffmpegStatic from 'ffmpeg-static';
 import { supabaseAdmin, STORAGE_BUCKETS, getStorageUrl } from '@/lib/supabase';
 
