@@ -4,7 +4,8 @@
 
 Clippie is a SaaS platform that helps content creators transform long-form videos into engaging short-form clips with AI-generated subtitles for social media.
 
-> 🚀 **[Visit Clippie](https://clippie-5000.vercel.app)**
+> 🚀 **[Visit Clippie](https://clippie-5000.vercel.app)**  
+> 🔄 **Last Updated:** April 14, 2024
 
 ## Implementation Details
 
