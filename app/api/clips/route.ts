@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { supabaseClient, supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import prismadb from "@/lib/prismadb";
 import { getUserSubscription, hasAvailableMinutes } from "@/lib/subscription";
 import { extractClip } from "@/lib/video-service";
 import { transcribeClip } from "@/lib/transcription-service";
+import { cookies } from "next/headers";
 
 // Make sure we're using Node.js runtime for this API route
 export const runtime = 'nodejs';
@@ -11,7 +12,10 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    // Get the session using the cookies API
+    const cookieStore = cookies();
+    const { data: { session } } = await supabaseAdmin.auth.getSession();
+    
     const userId = session?.user?.id;
     
     if (!userId) {
@@ -194,7 +198,10 @@ async function processClip(
 
 export async function GET(req: Request) {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    // Get the session using the cookies API
+    const cookieStore = cookies();
+    const { data: { session } } = await supabaseAdmin.auth.getSession();
+    
     const userId = session?.user?.id;
     
     if (!userId) {

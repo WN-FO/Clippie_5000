@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import { Upload, FileText, X, Check } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { supabaseClient, STORAGE_BUCKETS } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
@@ -26,6 +27,17 @@ export const UploadDropzone = () => {
   const [progress, setProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [client, setClient] = useState(supabaseClient);
+
+  // Initialize client on the browser side if needed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !client) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+      const browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
+      setClient(browserClient);
+    }
+  }, [client]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const selectedFile = acceptedFiles[0];
@@ -50,7 +62,13 @@ export const UploadDropzone = () => {
   });
 
   const uploadFile = async () => {
-    if (!file) return;
+    if (!file || !client) {
+      if (!client) {
+        setUploadError("Upload client not available");
+        toast.error("Upload client not available");
+      }
+      return;
+    }
     
     try {
       setUploading(true);
@@ -74,7 +92,7 @@ export const UploadDropzone = () => {
       }, 500);
       
       // Upload to Supabase Storage
-      const { data, error } = await supabaseClient.storage
+      const { data, error } = await client.storage
         .from(STORAGE_BUCKETS.VIDEOS)
         .upload(filePath, file, {
           cacheControl: '3600',

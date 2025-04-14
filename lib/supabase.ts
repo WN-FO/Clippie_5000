@@ -7,7 +7,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
 
 // Client for browser usage (auth)
-export const supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
+export const supabaseClient = typeof window !== 'undefined'
+  ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+  : null; // Will be null on server side
 
 // Admin client for server usage (when higher privileges are needed)
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);

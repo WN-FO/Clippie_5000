@@ -4,6 +4,7 @@ import React, { useEffect, useState, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Session, User } from '@supabase/supabase-js';
 import { supabaseClient } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
 
 interface AuthContextType {
   session: Session | null;
@@ -24,36 +25,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [client, setClient] = useState(supabaseClient);
   const router = useRouter();
 
+  // Initialize client on the browser side
   useEffect(() => {
-    const { data: authListener } = supabaseClient.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+    if (typeof window !== 'undefined' && !client) {
+      // If client is null (server side), create it on client side
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+      const browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
+      setClient(browserClient);
+    }
+  }, [client]);
 
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+  useEffect(() => {
+    // Only run this on the client side with a valid client
+    if (typeof window !== 'undefined' && client) {
+      const { data: authListener } = client.auth.onAuthStateChange(
+        (event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
+
+      // Get initial session
+      const getInitialSession = async () => {
+        try {
+          const { data: { session } } = await client.auth.getSession();
+          setSession(session);
+          setUser(session?.user ?? null);
+        } catch (error) {
+          console.error('Error getting session:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      getInitialSession();
+
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    } else {
+      // If not on client, just set loading to false
       setLoading(false);
-    };
-
-    getInitialSession();
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    }
+  }, [client]);
 
   const signIn = async (email: string, password: string) => {
+    if (!client) {
+      setError(new Error('Authentication client not available'));
+      return;
+    }
+    
     try {
       setLoading(true);
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { error } = await client.auth.signInWithPassword({ email, password });
       if (error) throw error;
       router.push('/dashboard');
     } catch (error) {
@@ -64,9 +93,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
+    if (!client) {
+      setError(new Error('Authentication client not available'));
+      return;
+    }
+    
     try {
       setLoading(true);
-      const { error } = await supabaseClient.auth.signUp({ email, password });
+      const { error } = await client.auth.signUp({ email, password });
       if (error) throw error;
       // Redirect to email confirmation page or dashboard
       router.push('/auth/verify');
@@ -78,9 +112,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!client) {
+      setError(new Error('Authentication client not available'));
+      return;
+    }
+    
     try {
       setLoading(true);
-      const { error } = await supabaseClient.auth.signOut();
+      const { error } = await client.auth.signOut();
       if (error) throw error;
       router.push('/');
     } catch (error) {
@@ -91,9 +130,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
+    if (!client) {
+      setError(new Error('Authentication client not available'));
+      return;
+    }
+    
     try {
       setLoading(true);
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      const { error } = await client.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/update-password`,
       });
       if (error) throw error;
@@ -105,9 +149,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updatePassword = async (password: string) => {
+    if (!client) {
+      setError(new Error('Authentication client not available'));
+      return;
+    }
+    
     try {
       setLoading(true);
-      const { error } = await supabaseClient.auth.updateUser({ password });
+      const { error } = await client.auth.updateUser({ password });
       if (error) throw error;
       router.push('/dashboard');
     } catch (error) {
