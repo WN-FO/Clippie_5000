@@ -5,6 +5,9 @@ import { getUserSubscription, hasAvailableMinutes } from "@/lib/subscription";
 import { extractClip } from "@/lib/video-service";
 import { transcribeClip } from "@/lib/transcription-service";
 
+// Specify Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 export async function POST(req: Request) {
   try {
     const { data: { session } } = await supabaseClient.auth.getSession();
