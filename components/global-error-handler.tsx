@@ -1,6 +1,13 @@
 'use client';
 
+/**
+ * @deprecated This component is deprecated. 
+ * Use the new error-boundary.tsx and error-utils.ts instead.
+ * This file is kept for backwards compatibility.
+ */
+
 import React, { useEffect } from 'react';
+import { logError } from '@/lib/error-utils';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -24,7 +31,7 @@ class GlobalErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBound
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // You can log the error to an error reporting service
-    console.error('Error caught by GlobalErrorBoundary:', error, errorInfo);
+    logError(error, 'GlobalErrorBoundary');
   }
 
   render() {
@@ -74,7 +81,7 @@ export function GlobalErrorHandler({ children }: { children: React.ReactNode }) 
     };
 
     const unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
-      console.error('Unhandled Promise Rejection:', event.reason);
+      logError(event.reason, 'UnhandledPromiseRejection');
     };
 
     window.addEventListener('unhandledrejection', unhandledRejectionHandler);

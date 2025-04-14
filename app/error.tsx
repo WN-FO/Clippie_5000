@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
+import { ErrorDisplay } from '@/components/ui/error-display';
+import { logError } from '@/lib/error-utils';
 
 export default function Error({
   error,
@@ -11,30 +12,25 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
-    console.error('Application error:', error);
+    // Log the error to our error logging service
+    logError(error, 'AppError');
   }, [error]);
 
+  // Get a more specific error message if available
+  const errorMessage = error.message || 'An unexpected error occurred';
+  const detailedMessage = error.digest ? `Error ID: ${error.digest}` : undefined;
+
   return (
-    <div className="h-full flex flex-col items-center justify-center space-y-4">
-      <h1 className="text-4xl font-bold">Something went wrong!</h1>
-      <p className="text-xl text-muted-foreground">
-        An error occurred while processing your request.
-      </p>
-      <div className="flex gap-4">
-        <button
-          onClick={reset}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 transition"
-        >
-          Try again
-        </button>
-        <Link 
-          href="/"
-          className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition"
-        >
-          Return Home
-        </Link>
-      </div>
-    </div>
+    <ErrorDisplay
+      title="Application Error"
+      message={errorMessage}
+      retry={reset}
+    >
+      {detailedMessage && (
+        <div className="px-4 py-2 bg-muted rounded-md text-xs mb-6 max-w-md overflow-auto">
+          <code>{detailedMessage}</code>
+        </div>
+      )}
+    </ErrorDisplay>
   );
 } 

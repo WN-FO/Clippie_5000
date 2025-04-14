@@ -1,7 +1,14 @@
 'use client';
 
+/**
+ * @deprecated This component is deprecated. 
+ * Use the new error-boundary.tsx and error-utils.ts instead.
+ * This file is kept for backwards compatibility.
+ */
+
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { logError } from '@/lib/error-utils';
 
 export default function RootErrorBoundary({
   error,
@@ -15,7 +22,7 @@ export default function RootErrorBoundary({
   useEffect(() => {
     // Log the error to an error reporting service
     if (error) {
-      console.error('Root level error:', error);
+      logError(error, 'RootErrorBoundary');
     }
   }, [error]);
 

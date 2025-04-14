@@ -3,11 +3,12 @@ import { constructMetadata } from "@/lib/metadata";
 import { Toaster } from 'sonner'
 import { ModalProvider } from "@/components/modal-provider";
 import ClientAuthProvider from "@/components/client-auth-provider";
-import { GlobalErrorHandler } from "@/components/global-error-handler";
 import WhiteScreenDetector from "@/components/white-screen-detector";
 import DebuggerTool from "@/components/debugger-tool";
-import RootErrorBoundary from "@/components/root-error-boundary";
 import { Suspense } from "react";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { ErrorDisplay } from "@/components/ui/error-display";
+import { AppProvider } from '@/components/app-provider';
 
 import "./globals.css";
 
@@ -52,21 +53,26 @@ export default function RootLayout({
         <WhiteScreenDetector />
         <DebuggerTool />
         <div id="app-root" className="min-h-screen relative z-0">
-          <ClientAuthProvider>
-            <GlobalErrorHandler>
+          <ErrorBoundary
+            onError={(error, errorInfo) => {
+              // Log root level errors to console
+              console.error('Root level error:', error, errorInfo);
+            }}
+          >
+            <ClientAuthProvider>
               <Suspense fallback={<LoadingFallback />}>
                 <main id="main-content" role="main" aria-label="Main content" className="relative min-h-screen bg-white z-10">
-                  <RootErrorBoundary error={null} reset={() => window.location.reload()}>
+                  <AppProvider>
                     {children}
-                  </RootErrorBoundary>
+                  </AppProvider>
                 </main>
                 <div className="z-50">
                   <Toaster richColors position="bottom-right" />
                   <ModalProvider />
                 </div>
               </Suspense>
-            </GlobalErrorHandler>
-          </ClientAuthProvider>
+            </ClientAuthProvider>
+          </ErrorBoundary>
         </div>
       </body>
     </html>

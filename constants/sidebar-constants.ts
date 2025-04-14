@@ -6,7 +6,11 @@ import {
   FileText,
   Download,
   Settings,
+  Bug,
 } from "lucide-react";
+
+// Get the debug flag from the environment
+const isDebug = process.env.NODE_ENV === 'development';
 
 export const routes = [
   {
@@ -50,4 +54,13 @@ export const routes = [
     icon: Settings,
     href: "/settings",
   },
+  // If in development mode, add the error test page
+  ...(isDebug ? [
+    {
+      label: 'Error Test',
+      icon: Bug,
+      href: '/error-test',
+      color: 'text-rose-500',
+    }
+  ] : []),
 ];
