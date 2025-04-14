@@ -4,7 +4,6 @@ import { Toaster } from 'sonner'
 import { ModalProvider } from "@/components/modal-provider";
 import ClientAuthProvider from "@/components/client-auth-provider";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
-import WhiteScreenFix from "@/components/white-screen-fix";
 import WhiteScreenDetector from "@/components/white-screen-detector";
 import DebuggerTool from "@/components/debugger-tool";
 
@@ -30,48 +29,20 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <title>Clippie 5000 - AI-Powered Video Clip Generator</title>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            body {
-              display: block !important;
-              visibility: visible !important;
-              opacity: 1 !important;
-              overflow-x: hidden;
-            }
-            #app-root, #main-content {
-              visibility: visible !important;
-              display: block !important;
-              min-height: 100vh;
-              position: relative;
-              z-index: 1;
-            }
-          `
-        }} />
       </head>
-      <body className={`${inter.className} antialiased`} style={{
-        display: 'block',
-        minHeight: '100vh',
-        background: '#FFFFFF',
-        visibility: 'visible',
-        position: 'relative'
-      }}>
-        <WhiteScreenFix />
+      <body className={`${inter.className} antialiased min-h-screen bg-white`}>
         <WhiteScreenDetector />
         <DebuggerTool />
-        <div id="app-root" className="min-h-screen relative" style={{
-          display: 'block',
-          visibility: 'visible',
-          opacity: 1,
-          zIndex: 10,
-          background: '#FFFFFF'
-        }}>
+        <div id="app-root" className="min-h-screen relative z-0">
           <ClientAuthProvider>
             <GlobalErrorHandler>
-              <Toaster richColors position="bottom-right" />
-              <ModalProvider />
-              <main id="main-content" role="main" aria-label="Main content" className="relative z-10 min-h-screen bg-white">
+              <main id="main-content" role="main" aria-label="Main content" className="relative min-h-screen bg-white z-10">
                 {children}
               </main>
+              <div className="z-50">
+                <Toaster richColors position="bottom-right" />
+                <ModalProvider />
+              </div>
             </GlobalErrorHandler>
           </ClientAuthProvider>
         </div>

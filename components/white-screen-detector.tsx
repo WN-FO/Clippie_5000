@@ -23,94 +23,80 @@ export default function WhiteScreenDetector() {
       const mainStyle = window.getComputedStyle(mainContent);
       const appStyle = window.getComputedStyle(appRoot);
       
-      // Check for visibility issues
+      // Only fix visibility if elements are actually hidden
       const hasVisibilityIssue = 
         bodyStyle.display === 'none' || 
         bodyStyle.visibility === 'hidden' || 
-        bodyStyle.opacity === '0' ||
         mainStyle.display === 'none' || 
         mainStyle.visibility === 'hidden' || 
-        mainStyle.opacity === '0' ||
         appStyle.display === 'none' || 
-        appStyle.visibility === 'hidden' || 
-        appStyle.opacity === '0';
+        appStyle.visibility === 'hidden';
       
-      // Check for overlay issues (elements with high z-index covering content)
-      const potentialOverlays = document.querySelectorAll('div[style*="position: fixed"], div[style*="position: absolute"]');
+      // Check for problematic overlays (white background with high z-index)
+      const potentialOverlays = document.querySelectorAll('div[style*="position: fixed"]:not([role="dialog"]):not([data-radix-portal]):not([class*="toaster"])');
       let overlayIssueDetected = false;
       
       potentialOverlays.forEach(overlay => {
         const style = window.getComputedStyle(overlay);
         const zIndex = parseInt(style.zIndex, 10);
         
-        // Look for white overlays with high z-index
-        if (!isNaN(zIndex) && zIndex > 100) {
+        // Only fix white overlays with very high z-index that cover the whole screen
+        // and are not part of a legitimate UI component
+        if (!isNaN(zIndex) && zIndex > 1000) {
           const bgColor = style.backgroundColor;
+          const isFullScreen = style.width === '100%' && style.height === '100%';
           const opacity = parseFloat(style.opacity);
           
-          // Check if it's a white or transparent overlay with high z-index
-          if ((bgColor.includes('255, 255, 255') || bgColor.includes('rgba(0, 0, 0, 0)')) && 
-              style.width.includes('100') && 
-              style.height.includes('100')) {
-            
-            // Fix overlay by making it transparent or removing it
-            (overlay as HTMLElement).style.backgroundColor = 'transparent';
+          // Check if this is likely an unwanted overlay
+          const isUnwantedOverlay = 
+            bgColor.includes('255, 255, 255') && // is white
+            isFullScreen && // covers whole screen
+            opacity > 0.9 && // is mostly opaque
+            !overlay.hasAttribute('role') && // not a semantic element
+            !overlay.id?.includes('portal') && // not a portal
+            !overlay.className?.includes('modal') && // not a modal
+            !overlay.className?.includes('dialog') && // not a dialog
+            !overlay.className?.includes('toast'); // not a toast
+          
+          if (isUnwantedOverlay) {
             (overlay as HTMLElement).style.display = 'none';
-            (overlay as HTMLElement).style.zIndex = '-1';
             overlayIssueDetected = true;
-            console.log('Fixed overlay issue:', overlay);
+            console.log('Fixed problematic overlay:', overlay);
           }
         }
       });
       
-      // Fix visibility issues
+      // Fix visibility issues if detected
       if (hasVisibilityIssue) {
-        body.style.display = 'block';
-        body.style.visibility = 'visible';
-        body.style.opacity = '1';
+        if (bodyStyle.display === 'none') body.style.display = 'block';
+        if (bodyStyle.visibility === 'hidden') body.style.visibility = 'visible';
         
         if (mainContent) {
-          mainContent.style.display = 'block';
-          mainContent.style.visibility = 'visible';
-          mainContent.style.opacity = '1';
+          if (mainStyle.display === 'none') mainContent.style.display = 'block';
+          if (mainStyle.visibility === 'hidden') mainContent.style.visibility = 'visible';
         }
         
         if (appRoot) {
-          appRoot.style.display = 'block';
-          appRoot.style.visibility = 'visible';
-          appRoot.style.opacity = '1';
+          if (appStyle.display === 'none') appRoot.style.display = 'block';
+          if (appStyle.visibility === 'hidden') appRoot.style.visibility = 'visible';
         }
         
         console.log('Fixed visibility issues');
         setHasFixedIssue(true);
       }
       
-      // Check if any fixes were applied
-      if (hasVisibilityIssue || overlayIssueDetected) {
-        return true;
-      }
-      
-      return false;
+      return hasVisibilityIssue || overlayIssueDetected;
     };
     
-    // Run detection immediately
+    // Run detection on mount and after any navigation
     const initialCheck = detectAndFixWhiteScreen();
     
-    // Set up continuous monitoring
-    const intervalId = setInterval(detectAndFixWhiteScreen, 1000);
+    // Set up periodic check with a longer interval
+    const intervalId = setInterval(detectAndFixWhiteScreen, 2000);
     
-    // Set up event listeners to detect issues after navigation or user interaction
-    const checkAfterInteraction = () => {
-      setTimeout(detectAndFixWhiteScreen, 100);
-    };
-    
-    document.addEventListener('click', checkAfterInteraction);
-    window.addEventListener('popstate', checkAfterInteraction);
-    
+    // Clean up
     return () => {
       clearInterval(intervalId);
-      document.removeEventListener('click', checkAfterInteraction);
-      window.removeEventListener('popstate', checkAfterInteraction);
     };
   }, []);
   
