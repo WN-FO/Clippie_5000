@@ -47,46 +47,40 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-white min-h-screen`}>
-        <ErrorBoundary
-          onError={(error, errorInfo) => {
-            console.error('Root level error:', error, errorInfo);
-          }}
-        >
-          <ClientAuthProvider>
-            <AppProvider>
-              <main className="min-h-screen bg-white">
-                {children}
-              </main>
-              <Toaster />
-              <ModalProvider />
-            </AppProvider>
-          </ClientAuthProvider>
-          
-          {/* Debug overlay */}
-          <div id="debug-overlay" style={{
-            position: 'fixed',
-            bottom: '1rem',
-            right: '1rem',
-            background: 'rgba(0,0,0,0.8)',
-            color: 'white',
-            padding: '0.5rem',
-            borderRadius: '0.5rem',
-            zIndex: 9999,
-            display: 'none'
-          }}>
-            App is loading...
-          </div>
+        <ClientAuthProvider>
+          <AppProvider>
+            <main className="min-h-screen bg-white">
+              {children}
+            </main>
+            <Toaster />
+            <ModalProvider />
+          </AppProvider>
+        </ClientAuthProvider>
+        
+        {/* Debug overlay */}
+        <div id="debug-overlay" style={{
+          position: 'fixed',
+          bottom: '1rem',
+          right: '1rem',
+          background: 'rgba(0,0,0,0.8)',
+          color: 'white',
+          padding: '0.5rem',
+          borderRadius: '0.5rem',
+          zIndex: 9999,
+          display: 'none'
+        }}>
+          App is loading...
+        </div>
 
-          <script dangerouslySetInnerHTML={{
-            __html: `
-              console.log('Page loaded');
-              document.getElementById('debug-overlay').style.display = 'block';
-              setTimeout(() => {
-                document.getElementById('debug-overlay').textContent = 'App loaded';
-              }, 1000);
-            `
-          }} />
-        </ErrorBoundary>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            console.log('Page loaded');
+            document.getElementById('debug-overlay').style.display = 'block';
+            setTimeout(() => {
+              document.getElementById('debug-overlay').textContent = 'App loaded';
+            }, 1000);
+          `
+        }} />
       </body>
     </html>
   );
