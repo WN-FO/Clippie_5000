@@ -17,7 +17,6 @@ export const metadata = constructMetadata({
 
 // Force dynamic rendering to prevent hydration issues
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
 
 export default function RootLayout({
   children,
