@@ -3,6 +3,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { redirect } from "next/navigation";
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { LandingNavbar } from '@/components/landing-navbar';
 import { LandingHero } from '@/components/landing-hero';
@@ -10,6 +11,54 @@ import { LandingContent } from '@/components/landing-content';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Scissors, Video, FileText, Clock, CheckCircle2 } from 'lucide-react';
 import { PLANS } from '@/constants/subscription-plans';
+
+// Debug component to help identify white screen issues
+function DebugLayer() {
+  useEffect(() => {
+    console.log('🔍 DebugLayer mounted - checking for potential issues');
+    
+    // Check for unusual CSS - find potential overlay elements
+    const overlays = document.querySelectorAll('div[style*="position: fixed"][style*="inset: 0"]');
+    if (overlays.length > 0) {
+      console.log('⚠️ Potential overlay elements found:', overlays);
+      console.log('Overlay styles:', Array.from(overlays).map(el => el.getAttribute('style')));
+      
+      // Log the z-index of potential overlays
+      overlays.forEach((overlay, i) => {
+        const style = window.getComputedStyle(overlay);
+        console.log(`Overlay ${i} z-index:`, style.zIndex);
+        console.log(`Overlay ${i} background:`, style.background);
+        console.log(`Overlay ${i} classes:`, overlay.className);
+      });
+    }
+
+    // Check if there are any elements with high z-index that might be creating a white screen
+    const highZIndexElements = Array.from(document.querySelectorAll('*')).filter(el => {
+      const style = window.getComputedStyle(el);
+      const zIndex = parseInt(style.zIndex, 10);
+      return !isNaN(zIndex) && zIndex > 1000; // Arbitrary high z-index threshold
+    });
+    
+    if (highZIndexElements.length > 0) {
+      console.log('⚠️ Elements with high z-index found:', highZIndexElements);
+      highZIndexElements.forEach((el, i) => {
+        const style = window.getComputedStyle(el);
+        console.log(`High z-index element ${i}:`, el);
+        console.log(`  z-index:`, style.zIndex);
+        console.log(`  background:`, style.background);
+        console.log(`  position:`, style.position);
+        console.log(`  classes:`, el.className);
+      });
+    }
+
+    // Return cleanup function
+    return () => {
+      console.log('🔍 DebugLayer unmounted');
+    };
+  }, []);
+  
+  return null; // This component doesn't render anything
+}
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -20,6 +69,7 @@ export default function LandingPage() {
 
   return (
     <div className="h-full">
+      <DebugLayer />
       <LandingNavbar />
       <LandingHero />
       
