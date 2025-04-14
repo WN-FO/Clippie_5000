@@ -3,8 +3,7 @@
 import React, { useEffect, useState, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Session, User } from '@supabase/supabase-js';
-import { supabaseClient } from '@/lib/supabase';
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/lib/supabase-browser';
 
 interface AuthContextType {
   session: Session | null;
@@ -30,12 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize Supabase client
   const [client] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      return createBrowserClient(supabaseUrl, supabaseAnonKey);
+    try {
+      return createClient();
+    } catch (error) {
+      console.error('Failed to create Supabase client:', error);
+      return null;
     }
-    return null;
   });
 
   // Handle mounting
@@ -44,34 +43,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!mounted || !client) return;
+    if (!mounted || !client) {
+      console.log('Not mounted or no client yet');
+      return;
+    }
+
+    let ignore = false;
 
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await client.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
+        console.log('Getting initial session...');
+        const { data: { session }, error } = await client.auth.getSession();
+        if (error) throw error;
+        if (!ignore) {
+          console.log('Setting initial session:', session);
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
       } catch (error) {
         console.error('Error getting session:', error);
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
 
     // Set up auth state listener
-    const { data: { subscription } } = client.auth.onAuthStateChange(
-      async (event, session) => {
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      if (!ignore) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       }
-    );
+    });
 
     // Get initial session
     getInitialSession();
 
     // Cleanup
     return () => {
+      ignore = true;
       subscription.unsubscribe();
     };
   }, [client, mounted]);
@@ -79,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     session,
     user,
-    loading: loading || !mounted, // Consider not mounted as loading
+    loading: loading || !mounted,
     error,
     signIn: async (email: string, password: string) => {
       if (!client) return;
@@ -89,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         router.push('/dashboard');
       } catch (error) {
+        console.error('Sign in error:', error);
         setError(error as Error);
       } finally {
         setLoading(false);
@@ -102,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         router.push('/auth/verify');
       } catch (error) {
+        console.error('Sign up error:', error);
         setError(error as Error);
       } finally {
         setLoading(false);
@@ -115,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         router.push('/');
       } catch (error) {
+        console.error('Sign out error:', error);
         setError(error as Error);
       } finally {
         setLoading(false);
@@ -129,6 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         if (error) throw error;
       } catch (error) {
+        console.error('Reset password error:', error);
         setError(error as Error);
       } finally {
         setLoading(false);
@@ -142,12 +161,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         router.push('/dashboard');
       } catch (error) {
+        console.error('Update password error:', error);
         setError(error as Error);
       } finally {
         setLoading(false);
       }
     },
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

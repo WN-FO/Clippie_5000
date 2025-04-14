@@ -61,7 +61,7 @@ function DebugLayer() {
 }
 
 export default function LandingPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, error } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -83,8 +83,23 @@ export default function LandingPage() {
   // Show loading state
   if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen w-full flex items-center justify-center bg-white">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
+          <p className="text-gray-600 mb-4">{error.message}</p>
+          <Button onClick={() => window.location.reload()}>
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
