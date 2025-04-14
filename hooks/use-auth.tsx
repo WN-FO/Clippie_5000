@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize client on the browser side
   useEffect(() => {
     if (typeof window !== 'undefined' && !client) {
+      // If client is null (server side), create it on client side
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
       const browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
@@ -46,14 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
-          
-          // Update window state
-          if (typeof window !== 'undefined') {
-            window.__INITIAL_STATE__ = {
-              ...window.__INITIAL_STATE__,
-              auth: session?.user ?? null
-            };
-          }
         }
       );
 
@@ -63,14 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const { data: { session } } = await client.auth.getSession();
           setSession(session);
           setUser(session?.user ?? null);
-          
-          // Update window state
-          if (typeof window !== 'undefined') {
-            window.__INITIAL_STATE__ = {
-              ...window.__INITIAL_STATE__,
-              auth: session?.user ?? null
-            };
-          }
         } catch (error) {
           console.error('Error getting session:', error);
         } finally {
@@ -84,6 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authListener.subscription.unsubscribe();
       };
     } else {
+      // If not on client, just set loading to false
       setLoading(false);
     }
   }, [client]);

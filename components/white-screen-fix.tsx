@@ -1,16 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-// Declare window type
-declare global {
-  interface Window {
-    __INITIAL_STATE__: {
-      hydrated: boolean;
-      auth: any;
-    };
-  }
-}
+import { useEffect } from 'react';
 
 /**
  * Enhanced WhiteScreenFix component that addresses multiple causes of white screens:
@@ -21,19 +11,22 @@ declare global {
  * 5. Vercel deployment issues with blank pages
  */
 export default function WhiteScreenFix() {
-  const [isHydrated, setIsHydrated] = useState(false);
-
   useEffect(() => {
-    // Mark as hydrated after initial render
-    setIsHydrated(true);
-    
-    // Initialize state
-    if (typeof window !== 'undefined') {
-      window.__INITIAL_STATE__ = {
-        ...window.__INITIAL_STATE__,
-        hydrated: true
-      };
-    }
+    // Create a cleanup function that will run periodically to detect and fix white screen overlays
+    const cleanupOverlays = () => {
+      // Find potential overlay elements that might be causing the white screen
+      const overlays = document.querySelectorAll('div[style*="position: fixed"][style*="inset: 0"]');
+      overlays.forEach(overlay => {
+        const style = window.getComputedStyle(overlay);
+        // Check if this overlay has a high z-index and is potentially blocking content
+        if (parseInt(style.zIndex, 10) > 1000 && style.backgroundColor.includes('rgb(255, 255, 255)')) {
+          // Make it invisible or remove it
+          (overlay as HTMLElement).style.backgroundColor = 'transparent';
+          (overlay as HTMLElement).style.zIndex = '-1';
+          console.log('Fixed a white overlay element');
+        }
+      });
+    };
 
     const styleElement = document.createElement('style');
     styleElement.innerHTML = `
@@ -44,9 +37,6 @@ export default function WhiteScreenFix() {
         opacity: 1 !important;
         background: #FFFFFF !important;
         min-height: 100vh !important;
-        overflow: visible !important;
-        position: relative !important;
-        z-index: 0 !important;
       }
 
       /* Ensure Next.js root elements are visible */
@@ -60,8 +50,7 @@ export default function WhiteScreenFix() {
         opacity: 1 !important;
         min-height: 100vh !important;
         position: relative !important;
-        z-index: 1 !important;
-        background: #FFFFFF !important;
+        z-index: 10 !important;
       }
 
       /* Fix Next.js App Router specific elements */
@@ -71,64 +60,53 @@ export default function WhiteScreenFix() {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
-        position: relative !important;
-        z-index: 1 !important;
       }
 
-      /* Remove any potential overlay issues */
-      .overlay, .backdrop, [class*="overlay"], [class*="backdrop"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
+      /* Target hidden white overlays */
+      div[style*="position: fixed"][style*="inset: 0"] {
+        pointer-events: none;
       }
 
-      /* Ensure all content is visible */
-      * {
+      /* Ensure modals are always visible when they should be */
+      [role="dialog"],
+      .modal,
+      .dialog {
+        z-index: 9999 !important;
         visibility: visible !important;
-        opacity: 1 !important;
+        display: block !important;
       }
     `;
 
     // Add the styles to the document
     document.head.appendChild(styleElement);
 
-    // Check for and remove any potential overlay elements
-    const checkForOverlays = () => {
-      const overlays = document.querySelectorAll('div[style*="position: fixed"][style*="inset: 0"]');
-      overlays.forEach(overlay => {
-        const style = window.getComputedStyle(overlay);
-        const zIndex = parseInt(style.zIndex, 10);
-        if (!isNaN(zIndex) && zIndex > 1000) {
-          overlay.remove();
-        }
-      });
-    };
-
-    // Run initial check
-    checkForOverlays();
+    // Run initial cleanup
+    cleanupOverlays();
 
     // Force a re-render after a short delay
-    const timer = setTimeout(() => {
+    const initialTimer = setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
-      checkForOverlays();
+      cleanupOverlays();
     }, 100);
 
-    // Add a mutation observer to watch for new elements
-    const observer = new MutationObserver(checkForOverlays);
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Set up a periodic check to clean up overlays that might appear after navigation
+    const periodicTimer = setInterval(() => {
+      cleanupOverlays();
+    }, 1000);
+
+    // Add click handler to catch and fix overlay issues immediately after user interaction
+    const clickHandler = () => {
+      setTimeout(cleanupOverlays, 50);
+    };
+    document.addEventListener('click', clickHandler);
 
     return () => {
       document.head.removeChild(styleElement);
-      clearTimeout(timer);
-      observer.disconnect();
+      clearTimeout(initialTimer);
+      clearInterval(periodicTimer);
+      document.removeEventListener('click', clickHandler);
     };
   }, []);
-
-  // Only render after hydration
-  if (!isHydrated) {
-    return null;
-  }
 
   return null;
 } 

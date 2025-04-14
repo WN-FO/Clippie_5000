@@ -5,6 +5,8 @@ import { ModalProvider } from "@/components/modal-provider";
 import ClientAuthProvider from "@/components/client-auth-provider";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
 import WhiteScreenFix from "@/components/white-screen-fix";
+import WhiteScreenDetector from "@/components/white-screen-detector";
+import DebuggerTool from "@/components/debugger-tool";
 
 import "./globals.css";
 
@@ -28,21 +30,41 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <title>Clippie 5000 - AI-Powered Video Clip Generator</title>
-        <script dangerouslySetInnerHTML={{
+        <style dangerouslySetInnerHTML={{
           __html: `
-            // Prevent flash of unstyled content
-            document.documentElement.classList.add('js');
-            // Initialize state before hydration
-            window.__INITIAL_STATE__ = {
-              hydrated: false,
-              auth: null
-            };
+            body {
+              display: block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              overflow-x: hidden;
+            }
+            #app-root, #main-content {
+              visibility: visible !important;
+              display: block !important;
+              min-height: 100vh;
+              position: relative;
+              z-index: 1;
+            }
           `
         }} />
       </head>
-      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`} style={{
+        display: 'block',
+        minHeight: '100vh',
+        background: '#FFFFFF',
+        visibility: 'visible',
+        position: 'relative'
+      }}>
         <WhiteScreenFix />
-        <div id="app-root" className="min-h-screen relative">
+        <WhiteScreenDetector />
+        <DebuggerTool />
+        <div id="app-root" className="min-h-screen relative" style={{
+          display: 'block',
+          visibility: 'visible',
+          opacity: 1,
+          zIndex: 10,
+          background: '#FFFFFF'
+        }}>
           <ClientAuthProvider>
             <GlobalErrorHandler>
               <Toaster richColors position="bottom-right" />
