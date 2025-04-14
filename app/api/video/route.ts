@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { supabaseClient } from "@/lib/supabase";
 import Replicate from "replicate";
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
+import { getServerSession } from "@/lib/auth-utils";
 
 // Specify Node.js runtime for this API route
 export const runtime = 'nodejs';
@@ -13,7 +13,7 @@ const replicate = new Replicate({
 
 export async function POST(req: Request) {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getServerSession();
     const userId = session?.user?.id;
     
     if (!userId) {

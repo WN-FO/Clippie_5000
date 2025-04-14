@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { supabaseClient } from "@/lib/supabase";
 import Replicate from "replicate";
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
+import { getServerSession } from "@/lib/auth-utils";
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN!,
@@ -10,7 +10,7 @@ const replicate = new Replicate({
 
 export async function POST(req: Request) {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getServerSession();
     const userId = session?.user?.id;
     
     if (!userId) {

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { supabaseClient } from "@/lib/supabase";
 import OpenAI from "openai";
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
+import { getServerSession } from "@/lib/auth-utils";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // This is also the default, can be omitted
@@ -10,7 +10,7 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getServerSession();
     const userId = session?.user?.id;
     
     if (!userId) {

@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { supabaseClient, STORAGE_BUCKETS, getStorageUrl } from "@/lib/supabase";
+import { supabaseAdmin, STORAGE_BUCKETS, getStorageUrl } from "@/lib/supabase";
 import prismadb from "@/lib/prismadb";
 import { getUserSubscription } from "@/lib/subscription";
 import { getVideoInfo } from "@/lib/video-service";
 import { PLANS } from "@/constants/subscription-plans";
+import { getServerSession } from "@/lib/auth-utils";
 
 export async function POST(req: Request) {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getServerSession();
     const userId = session?.user?.id;
     
     if (!userId) {
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
 async function processVideo(videoId: string, storageUrl: string, maxVideoLength: number, userId: string) {
   try {
     // Download the video for analysis
-    const { data, error } = await supabaseClient
+    const { data, error } = await supabaseAdmin
       .storage
       .from(STORAGE_BUCKETS.VIDEOS)
       .download(storageUrl.split('/').pop() || '');
@@ -186,7 +187,7 @@ async function processVideo(videoId: string, storageUrl: string, maxVideoLength:
 
 export async function GET(req: Request) {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getServerSession();
     const userId = session?.user?.id;
     
     if (!userId) {

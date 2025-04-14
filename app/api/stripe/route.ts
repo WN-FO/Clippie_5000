@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { supabaseClient } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
+import { getServerSession } from "@/lib/auth-utils";
 
 // Specify Node.js runtime for this API route
 export const runtime = 'nodejs';
@@ -10,14 +11,14 @@ const settingsUrl = absoluteUrl("/settings");
 
 export async function GET() {
   try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const session = await getServerSession();
     const userId = session?.user?.id;
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { data: subscriptionData } = await supabaseClient
+    const { data: subscriptionData } = await supabaseAdmin
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', userId)
