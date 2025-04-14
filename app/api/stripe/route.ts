@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
 import { getServerSession } from "@/lib/auth-utils";
+export const dynamic = 'force-dynamic';
 
 // Specify Node.js runtime for this API route
 export const runtime = 'nodejs';

@@ -20,6 +20,11 @@ const nextConfig = {
     }
     return config;
   },
+  // Configure route handlers to be dynamic by default
+  // This fixes the "Dynamic server usage" error related to cookies
+  serverRuntimeConfig: {
+    dynamicRouteHandlers: true,
+  },
 };
 
 module.exports = nextConfig;

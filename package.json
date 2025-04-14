@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "chmod +x ./add-dynamic-export.sh && ./add-dynamic-export.sh && prisma generate && next build",
     "start": "next start",
     "lint": "next lint"
   },

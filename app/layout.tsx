@@ -19,15 +19,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      </head>
       <body className={inter.className}>
         <WhiteScreenFix />
-        <ClientAuthProvider>
-          <GlobalErrorHandler>
-            <Toaster richColors/>
-            <ModalProvider />
-            {children}
-          </GlobalErrorHandler>
-        </ClientAuthProvider>
+        <div id="app-root" className="min-h-screen">
+          <ClientAuthProvider>
+            <GlobalErrorHandler>
+              <Toaster richColors/>
+              <ModalProvider />
+              {children}
+            </GlobalErrorHandler>
+          </ClientAuthProvider>
+        </div>
       </body>
     </html>
   );

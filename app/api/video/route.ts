@@ -3,6 +3,7 @@ import Replicate from "replicate";
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
 import { getServerSession } from "@/lib/auth-utils";
+export const dynamic = 'force-dynamic';
 
 // Specify Node.js runtime for this API route
 export const runtime = 'nodejs';

@@ -5,6 +5,7 @@ import { getUserSubscription } from "@/lib/subscription";
 import { getVideoInfo } from "@/lib/video-service";
 import { PLANS } from "@/constants/subscription-plans";
 import { getServerSession } from "@/lib/auth-utils";
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
