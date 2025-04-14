@@ -9,6 +9,10 @@ const nextConfig = {
       { hostname: "cdn.openai.com" },
     ],
   },
+  output: 'standalone',
+  experimental: {
+    serverComponentsExternalPackages: ['fluent-ffmpeg', 'ffmpeg-static'],
+  },
 };
 
 module.exports = nextConfig;

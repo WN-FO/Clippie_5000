@@ -108,7 +108,7 @@ export async function extractClip(
     }
     
     // Write the video to a temp file
-    fs.writeFileSync(inputPath, Buffer.from(await data.arrayBuffer()));
+    fs.writeFileSync(inputPath, new Uint8Array(await data.arrayBuffer()));
     
     // Get the selected resolution
     const targetRes = RESOLUTIONS[resolution as keyof typeof RESOLUTIONS] || RESOLUTIONS['720p'];
@@ -138,7 +138,7 @@ export async function extractClip(
         .on('end', async () => {
           try {
             // Upload the processed clip to Supabase
-            const fileBuffer = fs.readFileSync(outputPath);
+            const fileBuffer = new Uint8Array(fs.readFileSync(outputPath));
             const clipPath = `clips/${outputFilename}`;
             
             const { data, error } = await supabaseAdmin
@@ -188,7 +188,7 @@ export async function generateSubtitles(
   const wordsPerLine = 7; // Adjust for readability
   const secondsPerLine = 3; // Adjust timing
   
-  const lines = [];
+  const lines: string[] = [];
   for (let i = 0; i < words.length; i += wordsPerLine) {
     lines.push(words.slice(i, i + wordsPerLine).join(' '));
   }
@@ -214,7 +214,7 @@ export async function generateSubtitles(
   
   try {
     // Upload to Supabase
-    const fileBuffer = fs.readFileSync(subtitlePath);
+    const fileBuffer = new Uint8Array(fs.readFileSync(subtitlePath));
     const uploadPath = `subtitles/${subtitleFilename}`;
     
     const { data, error } = await supabaseAdmin
@@ -291,8 +291,8 @@ export async function burnSubtitles(
     }
     
     // Write files to temp directory
-    fs.writeFileSync(inputPath, Buffer.from(await clipData.arrayBuffer()));
-    fs.writeFileSync(subtitlesPath, Buffer.from(await subtitlesData.arrayBuffer()));
+    fs.writeFileSync(inputPath, new Uint8Array(await clipData.arrayBuffer()));
+    fs.writeFileSync(subtitlesPath, new Uint8Array(await subtitlesData.arrayBuffer()));
     
     // Determine subtitle position (y value)
     let positionValue = '(h-th-50)'; // Default to bottom
@@ -312,7 +312,7 @@ export async function burnSubtitles(
         .on('end', async () => {
           try {
             // Upload the processed clip to Supabase
-            const fileBuffer = fs.readFileSync(outputPath);
+            const fileBuffer = new Uint8Array(fs.readFileSync(outputPath));
             const clipPath = `clips/${outputFilename}`;
             
             const { data, error } = await supabaseAdmin
