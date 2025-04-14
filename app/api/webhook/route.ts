@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic';
 import prismadb from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe";
 import { PLANS, getPlanFromStripeId } from "@/constants/subscription-plans";
-export const dynamic = 'force-dynamic';
 
 // Specify Node.js runtime for this API route
 export const runtime = 'nodejs';
