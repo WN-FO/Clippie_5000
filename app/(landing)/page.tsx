@@ -61,28 +61,41 @@ function DebugLayer() {
 }
 
 export default function LandingPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      router.push("/dashboard");
-    } else {
-      setIsLoading(false);
-    }
-  }, [user, router]);
+    setMounted(true);
+  }, []);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (mounted && user && !loading) {
+      router.push("/dashboard");
+    }
+  }, [user, loading, mounted, router]);
+
+  // Don't render anything until mounted to prevent hydration issues
+  if (!mounted) {
+    return null;
+  }
+
+  // Show loading state
+  if (loading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center">
+      <div className="h-screen w-screen flex items-center justify-center bg-white">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
+  // If user is authenticated, we'll redirect (handled in useEffect)
+  if (user) {
+    return null;
+  }
+
   return (
-    <div className="h-full bg-white">
+    <div className="min-h-screen bg-white">
       <DebugLayer />
       <LandingNavbar />
       <LandingHero />

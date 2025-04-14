@@ -25,159 +25,130 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [client, setClient] = useState(supabaseClient);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // Initialize client on the browser side
+  // Initialize Supabase client
+  const [client] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      return createBrowserClient(supabaseUrl, supabaseAnonKey);
+    }
+    return null;
+  });
+
+  // Handle mounting
   useEffect(() => {
-    if (typeof window !== 'undefined' && !client) {
-      // If client is null (server side), create it on client side
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-      const browserClient = createBrowserClient(supabaseUrl, supabaseAnonKey);
-      setClient(browserClient);
-    }
-  }, [client]);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    // Only run this on the client side with a valid client
-    if (typeof window !== 'undefined' && client) {
-      const { data: authListener } = client.auth.onAuthStateChange(
-        (event, session) => {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      );
+    if (!mounted || !client) return;
 
-      // Get initial session
-      const getInitialSession = async () => {
-        try {
-          const { data: { session } } = await client.auth.getSession();
-          setSession(session);
-          setUser(session?.user ?? null);
-        } catch (error) {
-          console.error('Error getting session:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
+    const getInitialSession = async () => {
+      try {
+        const { data: { session } } = await client.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Error getting session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      getInitialSession();
+    // Set up auth state listener
+    const { data: { subscription } } = client.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
 
-      return () => {
-        authListener.subscription.unsubscribe();
-      };
-    } else {
-      // If not on client, just set loading to false
-      setLoading(false);
-    }
-  }, [client]);
+    // Get initial session
+    getInitialSession();
 
-  const signIn = async (email: string, password: string) => {
-    if (!client) {
-      setError(new Error('Authentication client not available'));
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      router.push('/dashboard');
-    } catch (error) {
-      setError(error as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signUp = async (email: string, password: string) => {
-    if (!client) {
-      setError(new Error('Authentication client not available'));
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const { error } = await client.auth.signUp({ email, password });
-      if (error) throw error;
-      // Redirect to email confirmation page or dashboard
-      router.push('/auth/verify');
-    } catch (error) {
-      setError(error as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signOut = async () => {
-    if (!client) {
-      setError(new Error('Authentication client not available'));
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const { error } = await client.auth.signOut();
-      if (error) throw error;
-      router.push('/');
-    } catch (error) {
-      setError(error as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    if (!client) {
-      setError(new Error('Authentication client not available'));
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
-      });
-      if (error) throw error;
-    } catch (error) {
-      setError(error as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updatePassword = async (password: string) => {
-    if (!client) {
-      setError(new Error('Authentication client not available'));
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const { error } = await client.auth.updateUser({ password });
-      if (error) throw error;
-      router.push('/dashboard');
-    } catch (error) {
-      setError(error as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Cleanup
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [client, mounted]);
 
   const value = {
     session,
     user,
-    loading,
+    loading: loading || !mounted, // Consider not mounted as loading
     error,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
-    updatePassword,
+    signIn: async (email: string, password: string) => {
+      if (!client) return;
+      try {
+        setLoading(true);
+        const { error } = await client.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        router.push('/dashboard');
+      } catch (error) {
+        setError(error as Error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    signUp: async (email: string, password: string) => {
+      if (!client) return;
+      try {
+        setLoading(true);
+        const { error } = await client.auth.signUp({ email, password });
+        if (error) throw error;
+        router.push('/auth/verify');
+      } catch (error) {
+        setError(error as Error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    signOut: async () => {
+      if (!client) return;
+      try {
+        setLoading(true);
+        const { error } = await client.auth.signOut();
+        if (error) throw error;
+        router.push('/');
+      } catch (error) {
+        setError(error as Error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    resetPassword: async (email: string) => {
+      if (!client) return;
+      try {
+        setLoading(true);
+        const { error } = await client.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/update-password`,
+        });
+        if (error) throw error;
+      } catch (error) {
+        setError(error as Error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    updatePassword: async (password: string) => {
+      if (!client) return;
+      try {
+        setLoading(true);
+        const { error } = await client.auth.updateUser({ password });
+        if (error) throw error;
+        router.push('/dashboard');
+      } catch (error) {
+        setError(error as Error);
+      } finally {
+        setLoading(false);
+      }
+    },
   };
-  
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
