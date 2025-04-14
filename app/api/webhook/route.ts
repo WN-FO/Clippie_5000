@@ -6,6 +6,9 @@ import prismadb from "@/lib/prismadb";
 import { stripe } from "@/lib/stripe";
 import { PLANS, getPlanFromStripeId } from "@/constants/subscription-plans";
 
+// Specify Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = headers().get("Stripe-Signature") as string;

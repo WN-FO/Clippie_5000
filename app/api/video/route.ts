@@ -4,6 +4,9 @@ import Replicate from "replicate";
 import { checkSubscription } from "@/lib/subscription";
 import { incrementApiLimit, checkApiLimit } from "@/lib/api-limit";
 
+// Specify Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN!,
 });

@@ -3,6 +3,9 @@ import { supabaseClient } from "@/lib/supabase";
 import { stripe } from "@/lib/stripe";
 import { absoluteUrl } from "@/lib/utils";
 
+// Specify Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 const settingsUrl = absoluteUrl("/settings");
 
 export async function GET() {
