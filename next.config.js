@@ -11,8 +11,6 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['fluent-ffmpeg', 'ffmpeg-static'],
-    // Enable React server components
-    serverActions: true,
     // Improve hydration behavior
     optimizeCss: true,
     // Improve page loading performance
@@ -60,11 +58,9 @@ const nextConfig = {
   // Improve static optimization
   poweredByHeader: false,
   compress: true,
-  // Disable static page optimization for now to fix build issues
+  // Use standalone output
   output: 'standalone',
   staticPageGenerationTimeout: 120,
-  // Disable automatic static optimization for problematic pages
-  unstable_excludeFiles: ['**/pages/404.*', '**/pages/500.*'],
 };
 
 module.exports = nextConfig;
