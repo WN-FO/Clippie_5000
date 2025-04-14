@@ -9,7 +9,6 @@ const nextConfig = {
       { hostname: "cdn.openai.com" },
     ],
   },
-  output: 'standalone',
   experimental: {
     serverComponentsExternalPackages: ['fluent-ffmpeg', 'ffmpeg-static'],
     // Enable React server components
@@ -53,7 +52,6 @@ const nextConfig = {
     return config;
   },
   // Configure route handlers to be dynamic by default
-  // This fixes the "Dynamic server usage" error related to cookies
   serverRuntimeConfig: {
     dynamicRouteHandlers: true,
   },
@@ -62,6 +60,11 @@ const nextConfig = {
   // Improve static optimization
   poweredByHeader: false,
   compress: true,
+  // Disable static page optimization for now to fix build issues
+  output: 'standalone',
+  staticPageGenerationTimeout: 120,
+  // Disable automatic static optimization for problematic pages
+  unstable_excludeFiles: ['**/pages/404.*', '**/pages/500.*'],
 };
 
 module.exports = nextConfig;
