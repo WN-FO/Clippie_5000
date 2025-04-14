@@ -44,7 +44,7 @@
     "react-player": "^2.14.1",
     "replicate": "^0.25.2",
     "sonner": "^1.4.0",
-    "stripe": "^15.3.0",
+    "stripe": "^18.0.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "typewriter-effect": "^2.19.0",
