@@ -6,6 +6,7 @@ import ClientAuthProvider from "@/components/client-auth-provider";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
 import WhiteScreenDetector from "@/components/white-screen-detector";
 import DebuggerTool from "@/components/debugger-tool";
+import { Suspense } from "react";
 
 import "./globals.css";
 
@@ -18,6 +19,14 @@ export const metadata = constructMetadata({
 // Force dynamic rendering to prevent hydration issues
 export const dynamic = 'force-dynamic';
 
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+    </div>
+  );
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -28,6 +37,15 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <title>Clippie 5000 - AI-Powered Video Clip Generator</title>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Prevent white flash
+              document.documentElement.style.backgroundColor = '#FFFFFF';
+              document.body.style.backgroundColor = '#FFFFFF';
+            `,
+          }}
+        />
       </head>
       <body className={`${inter.className} antialiased min-h-screen bg-white`}>
         <WhiteScreenDetector />
@@ -35,13 +53,15 @@ export default function RootLayout({
         <div id="app-root" className="min-h-screen relative z-0">
           <ClientAuthProvider>
             <GlobalErrorHandler>
-              <main id="main-content" role="main" aria-label="Main content" className="relative min-h-screen bg-white z-10">
-                {children}
-              </main>
-              <div className="z-50">
-                <Toaster richColors position="bottom-right" />
-                <ModalProvider />
-              </div>
+              <Suspense fallback={<LoadingFallback />}>
+                <main id="main-content" role="main" aria-label="Main content" className="relative min-h-screen bg-white z-10">
+                  {children}
+                </main>
+                <div className="z-50">
+                  <Toaster richColors position="bottom-right" />
+                  <ModalProvider />
+                </div>
+              </Suspense>
             </GlobalErrorHandler>
           </ClientAuthProvider>
         </div>

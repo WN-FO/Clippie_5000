@@ -88,15 +88,26 @@ export default function WhiteScreenDetector() {
       return hasVisibilityIssue || overlayIssueDetected;
     };
     
-    // Run detection on mount and after any navigation
-    const initialCheck = detectAndFixWhiteScreen();
+    // Initial check after a short delay to allow for hydration
+    const initialTimer = setTimeout(() => {
+      detectAndFixWhiteScreen();
+    }, 100);
     
     // Set up periodic check with a longer interval
     const intervalId = setInterval(detectAndFixWhiteScreen, 2000);
     
+    // Also check after route changes
+    const handleRouteChange = () => {
+      setTimeout(detectAndFixWhiteScreen, 100);
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    
     // Clean up
     return () => {
+      clearTimeout(initialTimer);
       clearInterval(intervalId);
+      window.removeEventListener('popstate', handleRouteChange);
     };
   }, []);
   
