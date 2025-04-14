@@ -6,6 +6,7 @@ import ClientAuthProvider from "@/components/client-auth-provider";
 import { GlobalErrorHandler } from "@/components/global-error-handler";
 import WhiteScreenDetector from "@/components/white-screen-detector";
 import DebuggerTool from "@/components/debugger-tool";
+import RootErrorBoundary from "@/components/root-error-boundary";
 import { Suspense } from "react";
 
 import "./globals.css";
@@ -55,7 +56,9 @@ export default function RootLayout({
             <GlobalErrorHandler>
               <Suspense fallback={<LoadingFallback />}>
                 <main id="main-content" role="main" aria-label="Main content" className="relative min-h-screen bg-white z-10">
-                  {children}
+                  <RootErrorBoundary error={null} reset={() => window.location.reload()}>
+                    {children}
+                  </RootErrorBoundary>
                 </main>
                 <div className="z-50">
                   <Toaster richColors position="bottom-right" />
