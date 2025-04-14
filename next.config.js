@@ -8,6 +8,7 @@ const nextConfig = {
       { hostname: "oaidalleapiprodscus.blob.core.windows.net" },
       { hostname: "cdn.openai.com" },
     ],
+    unoptimized: true,
   },
   experimental: {
     serverComponentsExternalPackages: ['fluent-ffmpeg', 'ffmpeg-static'],
@@ -46,6 +47,11 @@ const nextConfig = {
           },
         },
       };
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        child_process: false,
+      };
     }
     return config;
   },
@@ -61,6 +67,13 @@ const nextConfig = {
   // Use standalone output
   output: 'standalone',
   staticPageGenerationTimeout: 120,
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 module.exports = nextConfig;

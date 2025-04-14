@@ -9,7 +9,6 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ErrorDisplay } from "@/components/ui/error-display";
 import { AppProvider } from '@/components/app-provider';
-
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,6 +19,7 @@ export const metadata = constructMetadata({
 
 // Force dynamic rendering to prevent hydration issues
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function LoadingFallback() {
   return (
@@ -49,31 +49,28 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} antialiased min-h-screen bg-white`}>
-        <WhiteScreenDetector />
-        <DebuggerTool />
-        <div id="app-root" className="min-h-screen relative z-0">
-          <ErrorBoundary
-            onError={(error, errorInfo) => {
-              // Log root level errors to console
-              console.error('Root level error:', error, errorInfo);
-            }}
-          >
-            <ClientAuthProvider>
-              <Suspense fallback={<LoadingFallback />}>
-                <main id="main-content" role="main" aria-label="Main content" className="relative min-h-screen bg-white z-10">
+      <body className={inter.className}>
+        <ErrorBoundary
+          onError={(error, errorInfo) => {
+            console.error('Root level error:', error, errorInfo);
+          }}
+        >
+          <ClientAuthProvider>
+            <div id="app-root">
+              <main id="main-content" className="min-h-screen bg-white">
+                <Suspense fallback={<LoadingFallback />}>
                   <AppProvider>
                     {children}
                   </AppProvider>
-                </main>
-                <div className="z-50">
                   <Toaster richColors position="bottom-right" />
                   <ModalProvider />
-                </div>
-              </Suspense>
-            </ClientAuthProvider>
-          </ErrorBoundary>
-        </div>
+                </Suspense>
+              </main>
+            </div>
+            <WhiteScreenDetector />
+            <DebuggerTool />
+          </ClientAuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
