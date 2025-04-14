@@ -29,7 +29,9 @@ export default function RootLayout({
             <GlobalErrorHandler>
               <Toaster richColors/>
               <ModalProvider />
-              {children}
+              <main>
+                {children}
+              </main>
             </GlobalErrorHandler>
           </ClientAuthProvider>
         </div>

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export function constructMetadata({
-  title = "Omniscient",
+  title = "Clippie 5000 - AI-Powered Video Clip Generator",
   description = "Fullstack Software as a Service AI Platform",
 
   noIndex = false,
