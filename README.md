@@ -1,5 +1,7 @@
 # Clippie: AI-Powered Video Clip Creator
 
+[![Deployment Status](https://img.shields.io/github/deployments/WN-FO/Clippie_5000/production?label=vercel&logo=vercel)](https://clippie-5000.vercel.app)
+
 Clippie is a SaaS platform that helps content creators transform long-form videos into engaging short-form clips with AI-generated subtitles for social media.
 
 ## Implementation Details
