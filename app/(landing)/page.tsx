@@ -1,9 +1,9 @@
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { LandingNavbar } from '@/components/landing-navbar';
 import { LandingHero } from '@/components/landing-hero';
@@ -62,13 +62,27 @@ function DebugLayer() {
 
 export default function LandingPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (user) {
-    redirect("/dashboard");
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      setIsLoading(false);
+    }
+  }, [user, router]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="h-full">
+    <div className="h-full bg-white">
       <DebugLayer />
       <LandingNavbar />
       <LandingHero />
@@ -157,9 +171,7 @@ export default function LandingPage() {
               </CardContent>
               <CardFooter>
                 <Button className="w-full" asChild>
-                  <Link href="/sign-up">
-                    "Get Started Free"
-                  </Link>
+                  <Link href="/sign-up">Get Started Free</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -186,9 +198,7 @@ export default function LandingPage() {
               </CardContent>
               <CardFooter>
                 <Button className="w-full" asChild>
-                  <Link href="/sign-up">
-                    "Start Free Trial"
-                  </Link>
+                  <Link href="/sign-up">Start Free Trial</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -211,10 +221,8 @@ export default function LandingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button className="w-full" variant="outline" asChild>
-                  <Link href="/sign-up">
-                    "Start Free Trial"
-                  </Link>
+                <Button className="w-full" asChild>
+                  <Link href="/sign-up">Contact Sales</Link>
                 </Button>
               </CardFooter>
             </Card>

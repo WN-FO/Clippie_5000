@@ -12,17 +12,28 @@ export default function ClientAuthProvider({
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    // Wait for hydration to complete
-    setIsHydrated(true);
+    // Wait for next tick to ensure hydration
+    const timer = setTimeout(() => {
+      setIsHydrated(true);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
+  // Show loading state during hydration
   if (!isHydrated) {
-    return <AuthLoading />;
+    return (
+      <div className="min-h-screen bg-white">
+        <AuthLoading />
+      </div>
+    );
   }
 
   return (
     <AuthProvider>
-      {children}
+      <div className="min-h-screen bg-white">
+        {children}
+      </div>
     </AuthProvider>
   );
 } 
