@@ -48,9 +48,11 @@ export default function WhiteScreenFix() {
       }
 
       /* Ensure content is always above overlays */
-      main, [role="main"] {
+      main, [role="main"], #main-content {
         position: relative !important;
         z-index: 100000 !important;
+        display: block !important;
+        visibility: visible !important;
       }
       
       /* Fix for Vercel blank screen issues */
@@ -65,6 +67,11 @@ export default function WhiteScreenFix() {
         visibility: visible !important;
         opacity: 1 !important;
       }
+      
+      /* Ensure title is always rendered */
+      head title {
+        display: block !important;
+      }
     `;
     
     document.head.appendChild(styleElement);
@@ -78,6 +85,22 @@ export default function WhiteScreenFix() {
       console.log('Unable to access localStorage');
     }
     
+    // Check if title element exists, create one if it doesn't
+    const ensureTitleExists = () => {
+      if (!document.querySelector('title')) {
+        const titleElement = document.createElement('title');
+        titleElement.textContent = 'Clippie 5000 - AI-Powered Video Clip Generator';
+        document.head.appendChild(titleElement);
+      }
+    };
+    
+    // Check if main landmark exists
+    const ensureMainExists = () => {
+      if (!document.querySelector('main, [role="main"]')) {
+        console.warn('No main landmark found in the document');
+      }
+    };
+    
     // Log potential issues
     const checkForIssues = () => {
       const overlays = document.querySelectorAll('div[style*="position: fixed"]');
@@ -90,6 +113,9 @@ export default function WhiteScreenFix() {
       if (highZIndex.length > 0) {
         console.log('🔍 Found high z-index elements:', highZIndex.length);
       }
+      
+      ensureTitleExists();
+      ensureMainExists();
     };
 
     // Check immediately and after a short delay

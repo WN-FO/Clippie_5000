@@ -10,7 +10,9 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = constructMetadata();
+export const metadata = constructMetadata({
+  title: "Clippie 5000 - AI-Powered Video Clip Generator"
+});
 
 export default function RootLayout({
   children,
@@ -21,6 +23,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>Clippie 5000 - AI-Powered Video Clip Generator</title>
       </head>
       <body className={inter.className}>
         <WhiteScreenFix />
@@ -29,7 +32,7 @@ export default function RootLayout({
             <GlobalErrorHandler>
               <Toaster richColors/>
               <ModalProvider />
-              <main>
+              <main id="main-content" role="main" aria-label="Main content" className="z-10 relative">
                 {children}
               </main>
             </GlobalErrorHandler>

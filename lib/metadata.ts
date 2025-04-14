@@ -14,7 +14,7 @@ export function constructMetadata({
   return {
     title,
     description,
-    applicationName: "Omniscient",
+    applicationName: "Clippie 5000",
     keywords: [
       "AI",
       "OpenAI",
@@ -22,11 +22,17 @@ export function constructMetadata({
       "AI Platform",
       "SaaS Application",
       "JavaScript",
+      "Video Clips",
+      "Clip Generator"
     ],
-
     authors: { name: "Duarte Dias", url: "" },
     creator: "Duarte Dias",
-
+    // Explicitly set the title tag for better compatibility
+    openGraph: {
+      title,
+      description,
+      type: "website",
+    },
     ...(noIndex && {
       robots: {
         index: false,
