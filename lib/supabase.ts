@@ -1,6 +1,7 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
+import { STORAGE_BUCKETS, getStorageUrl } from './supabase-middleware';
 
 const getSupabaseUrl = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,6 +22,8 @@ export const createBrowserSupabaseClient = () => {
   }
   return createBrowserClient(getSupabaseUrl(), getSupabaseAnonKey());
 };
+
+export { STORAGE_BUCKETS, getStorageUrl };
 
 // Re-export storage bucket names and utils from server file
 export * from './supabase-server'; 
